@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCTracker - Credit Card & Expense Tracker</title>
+    <title>CCTracker - Credit Card & Expense Manager</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,672 +12,628 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                        }
+                        darkBg: '#0f172a',
+                        cardBg: '#1e293b',
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Font Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        /* --- App Color Themes --- */
+        body.theme-slate { background-color: #0f172a; color: #f8fafc; }
+        body.theme-emerald { background-color: #064e3b; color: #ecfdf5; }
+        body.theme-cyber { background-color: #030712; color: #06b6d4; }
+        body.theme-sunset { background-color: #451a03; color: #fef3c7; }
+        body.theme-crimson { background-color: #450a0a; color: #fee2e2; }
+        body.theme-light { background-color: #f1f5f9; color: #0f172a; }
+
+        /* --- Card Color Themes (12 Options) --- */
+        .card-theme-default { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; }
+        .card-theme-emerald { background: linear-gradient(135deg, #065f46 0%, #047857 100%); color: #ffffff; }
+        .card-theme-sunset { background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%); color: #ffffff; }
+        .card-theme-purple { background: linear-gradient(135deg, #581c87 0%, #7e22ce 100%); color: #ffffff; }
+        .card-theme-rose { background: linear-gradient(135deg, #be185d 0%, #e11d48 100%); color: #ffffff; }
+        .card-theme-ocean { background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%); color: #ffffff; }
+        .card-theme-slate { background: linear-gradient(135deg, #334155 0%, #475569 100%); color: #ffffff; }
+        .card-theme-amber { background: linear-gradient(135deg, #b45309 0%, #d97706 100%); color: #ffffff; }
+        .card-theme-teal { background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); color: #ffffff; }
+        .card-theme-indigo { background: linear-gradient(135deg, #3730a3 0%, #4f46e5 100%); color: #ffffff; }
+        .card-theme-crimson { background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); color: #ffffff; }
+        .card-theme-gold { background: linear-gradient(135deg, #854d0e 0%, #ca8a04 100%); color: #ffffff; }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-full flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+<body class="theme-slate min-h-screen font-sans antialiased transition-colors duration-300">
 
-    <!-- Top Navigation -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <!-- Top Navigation / Header -->
+    <header class="glass-card sticky top-0 z-50 border-b px-4 py-3 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-                    <i class="fa-solid fa-credit-card text-lg"></i>
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center font-bold text-lg">
+                    <i class="fa-solid fa-credit-card"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg text-slate-900 tracking-tight">CCTracker</h1>
-                    <p class="text-xs text-slate-500">Credit Card & Expense Manager</p>
+                    <h1 class="text-xl font-bold tracking-tight">CCTracker</h1>
+                    <p class="text-xs opacity-75">Credit Card & Expense Manager (INR)</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="openModal('transactionModal')" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl shadow-sm transition active:scale-95 cursor-pointer">
-                    <i class="fa-solid fa-plus mr-2"></i> Add Transaction
+
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <!-- Theme Selector -->
+                <select id="appThemeSelect" onchange="changeAppTheme(this.value)" class="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500">
+                    <option value="slate">Midnight Slate</option>
+                    <option value="emerald">Emerald Night</option>
+                    <option value="cyber">Cyber Neon</option>
+                    <option value="sunset">Sunset Gold</option>
+                    <option value="crimson">Crimson Dark</option>
+                    <option value="light">Clean Light</option>
+                </select>
+
+                <button onclick="openCardModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add Card
                 </button>
-                <button onclick="openModal('cardModal')" class="hidden sm:inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl shadow-sm transition active:scale-95 cursor-pointer">
-                    <i class="fa-solid fa-credit-card mr-2"></i> Add Card
+                <button onclick="openExpenseModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-receipt"></i> Log Expense
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-grow w-full">
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- Notification Banner / Message Box -->
-        <div id="toast" class="fixed top-20 right-4 z-50 transform translate-x-full transition-all duration-300 ease-in-out bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm">
-            <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
-            <span id="toastMessage">Action completed successfully.</span>
+        <!-- Summary Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-card p-5 rounded-2xl shadow-sm">
+                <p class="text-xs font-medium uppercase tracking-wider opacity-70">Total Credit Limit</p>
+                <h3 id="totalLimit" class="text-2xl font-bold mt-1">₹0.00</h3>
+                <span class="text-xs text-indigo-400 mt-2 block"><i class="fa-solid fa-wallet mr-1"></i> Across all cards</span>
+            </div>
+            <div class="glass-card p-5 rounded-2xl shadow-sm">
+                <p class="text-xs font-medium uppercase tracking-wider opacity-70">Total Outstanding Balance</p>
+                <h3 id="totalSpent" class="text-2xl font-bold mt-1 text-rose-400">₹0.00</h3>
+                <span class="text-xs text-rose-400 mt-2 block" id="utilizationBadge">0% Overall Utilization</span>
+            </div>
+            <div class="glass-card p-5 rounded-2xl shadow-sm">
+                <p class="text-xs font-medium uppercase tracking-wider opacity-70">Total Available Balance</p>
+                <h3 id="totalAvailable" class="text-2xl font-bold mt-1 text-emerald-400">₹0.00</h3>
+                <span class="text-xs text-emerald-400 mt-2 block"><i class="fa-solid fa-shield-check mr-1"></i> Ready to spend</span>
+            </div>
+            <div class="glass-card p-5 rounded-2xl shadow-sm">
+                <p class="text-xs font-medium uppercase tracking-wider opacity-70">Active Cards</p>
+                <h3 id="activeCardsCount" class="text-2xl font-bold mt-1">0</h3>
+                <span class="text-xs text-indigo-400 mt-2 block"><i class="fa-solid fa-credit-card mr-1"></i> Managed accounts</span>
+            </div>
         </div>
 
-        <!-- Dashboard Metrics Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <!-- Total Balance -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold uppercase tracking-wider">Total Outstanding</span>
-                    <div class="h-8 w-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card p-5 rounded-2xl lg:col-span-2 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-sm uppercase tracking-wider">Utilization & Spending Overview</h2>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-slate-900" id="totalBalance">$0.00</div>
-                <div class="text-xs text-slate-500 mt-2 flex items-center">
-                    <span class="text-red-500 font-medium mr-1"><i class="fa-solid fa-arrow-trend-up"></i> Active</span> across all credit cards
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="spendingChart"></canvas>
                 </div>
             </div>
-
-            <!-- Monthly Spend -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold uppercase tracking-wider">This Month Spending</span>
-                    <div class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <i class="fa-solid fa-calendar-days"></i>
-                    </div>
+            <div class="glass-card p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-sm uppercase tracking-wider">Category Breakdown</h2>
                 </div>
-                <div class="text-2xl sm:text-3xl font-bold text-slate-900" id="monthlySpend">$0.00</div>
-                <div class="text-xs text-slate-500 mt-2 flex items-center">
-                    <span class="text-emerald-600 font-medium mr-1"><i class="fa-solid fa-check"></i> Updated</span> current billing cycle
-                </div>
-            </div>
-
-            <!-- Total Credit Limit -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold uppercase tracking-wider">Total Credit Limit</span>
-                    <div class="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                </div>
-                <div class="text-2xl sm:text-3xl font-bold text-slate-900" id="totalLimit">$0.00</div>
-                <div class="text-xs text-slate-500 mt-2 flex items-center">
-                    <span class="text-blue-600 font-medium mr-1">Combined</span> ceiling limit
-                </div>
-            </div>
-
-            <!-- Overall Utilization -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold uppercase tracking-wider">Credit Utilization</span>
-                    <div class="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                        <i class="fa-solid fa-chart-pie"></i>
-                    </div>
-                </div>
-                <div class="text-2xl sm:text-3xl font-bold text-slate-900" id="overallUtilization">0.0%</div>
-                <div class="w-full bg-slate-100 rounded-full h-2 mt-3 overflow-hidden">
-                    <div id="overallUtilizationBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="categoryChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Main Grid Layout (Cards & Transactions) -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Left 1 Col: Credit Cards Section -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-bold text-slate-900 flex items-center">
-                        <i class="fa-solid fa-credit-card mr-2 text-emerald-600"></i> My Cards
-                    </h2>
-                    <button onclick="openModal('cardModal')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg transition cursor-pointer">
-                        <i class="fa-solid fa-plus mr-1"></i> Add Card
+        <!-- Credit Cards Section -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold">Your Credit Cards</h2>
+                <span class="text-xs opacity-75">Click card to filter transactions</span>
+            </div>
+            <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Dynamically Inserted Cards -->
+            </div>
+        </section>
+
+        <!-- Transactions / Expenses Section -->
+        <section class="space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h2 class="text-lg font-bold">Recent Expenses & Transactions</h2>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <select id="filterCardSelect" onchange="filterTransactions()" class="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 border border-slate-700">
+                        <option value="">All Cards</option>
+                    </select>
+                    <button onclick="clearAllTransactions()" class="text-xs text-rose-400 hover:text-rose-300 px-3 py-2 bg-rose-950/40 rounded-lg border border-rose-900/50">
+                        <i class="fa-solid fa-trash mr-1"></i> Clear History
                     </button>
                 </div>
-
-                <div id="cardsList" class="space-y-4">
-                    <!-- Rendered dynamically via JS -->
+            </div>
+            <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700/50 text-xs uppercase opacity-70 bg-slate-800/30">
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Card</th>
+                                <th class="p-4">Description / Merchant</th>
+                                <th class="p-4">Category</th>
+                                <th class="p-4 text-right">Amount</th>
+                                <th class="p-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTableBody">
+                            <!-- Dynamically Inserted Rows -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </section>
 
-            <!-- Right 2 Cols: Transaction Log & Filters -->
-            <div class="lg:col-span-2 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <h2 class="text-lg font-bold text-slate-900 flex items-center">
-                        <i class="fa-solid fa-receipt mr-2 text-emerald-600"></i> Transaction History
-                    </h2>
-                    <!-- Filters -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
-                                <i class="fa-solid fa-search"></i>
-                            </span>
-                            <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="Search merchant..." class="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 w-36 sm:w-44">
-                        </div>
-                        <select id="categoryFilter" onchange="renderTransactions()" class="py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="">All Categories</option>
-                            <option value="Food & Dining">Food & Dining</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Bills & Utilities">Bills & Utilities</option>
-                            <option value="Travel">Travel</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <select id="cardFilter" onchange="renderTransactions()" class="py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="">All Cards</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Transactions Table Container -->
-                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider font-semibold">
-                                    <th class="py-3 px-4">Merchant / Desc</th>
-                                    <th class="py-3 px-4">Card</th>
-                                    <th class="py-3 px-4">Category</th>
-                                    <th class="py-3 px-4">Date</th>
-                                    <th class="py-3 px-4 text-right">Amount</th>
-                                    <th class="py-3 px-4 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactionsTableBody" class="divide-y divide-slate-100 text-sm">
-                                <!-- Rendered dynamically via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Empty State -->
-                    <div id="emptyTransactions" class="hidden py-12 text-center">
-                        <div class="h-12 w-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-lg">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </div>
-                        <p class="text-slate-600 font-medium text-sm">No transactions found</p>
-                        <p class="text-xs text-slate-400 mt-1">Add a transaction or clear filters to see your records.</p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
-        <p>&copy; <span id="currentYear"></span> CCTracker. Secure Local Expense & Credit Management.</p>
-    </footer>
-
-    <!-- MODAL: Add Credit Card -->
-    <div id="cardModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs hidden p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-6 relative border border-slate-100 transform transition-all scale-100">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-900 flex items-center">
-                    <i class="fa-solid fa-credit-card text-emerald-600 mr-2"></i> Add Credit Card
-                </h3>
-                <button onclick="closeModal('cardModal')" class="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+    <!-- Modal: Add / Edit Card -->
+    <div id="cardModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="cardModalTitle" class="font-bold text-lg">Add New Credit Card</h3>
+                <button onclick="closeCardModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="cardForm" onsubmit="handleCardSubmit(event)" class="space-y-4">
+                <input type="hidden" id="cardEditId">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Card Name / Bank</label>
-                    <input type="text" id="cardName" required placeholder="e.g. Chase Sapphire Reserve" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Card Name / Bank</label>
+                    <input type="text" id="cardName" required placeholder="e.g. HDFC Regalia, SBI Cashback" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Last 4 Digits</label>
-                        <input type="text" id="cardLast4" required maxlength="4" placeholder="4589" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Last 4 Digits</label>
+                        <input type="text" id="cardLast4" maxlength="4" placeholder="4321" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Credit Limit ($)</label>
-                        <input type="number" id="cardLimit" required min="1" step="any" placeholder="10000" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Current Balance ($)</label>
-                        <input type="number" id="cardBalance" required min="0" step="any" value="0" placeholder="1250" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Card Color Theme</label>
-                        <select id="cardColor" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="from-slate-900 to-slate-800">Obsidian Black</option>
-                            <option value="from-blue-700 to-indigo-900">Royal Blue</option>
-                            <option value="from-emerald-700 to-teal-900">Emerald Green</option>
-                            <option value="from-purple-700 to-indigo-900">Deep Purple</option>
-                            <option value="from-amber-600 to-red-800">Crimson Gold</option>
-                        </select>
+                        <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Total Limit (₹)</label>
+                        <input type="number" id="cardLimit" required step="any" placeholder="100000" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('cardModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition cursor-pointer">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition cursor-pointer">Save Card</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Statement Date (Day)</label>
+                        <input type="number" id="cardStatementDate" min="1" max="31" placeholder="15" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Due Date (Day)</label>
+                        <input type="number" id="cardDueDate" min="1" max="31" placeholder="5" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Card Color Theme</label>
+                    <select id="cardColorTheme" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="default">Default Dark</option>
+                        <option value="emerald">Emerald Green</option>
+                        <option value="sunset">Sunset Orange</option>
+                        <option value="purple">Royal Purple</option>
+                        <option value="rose">Rose Pink</option>
+                        <option value="ocean">Ocean Blue</option>
+                        <option value="slate">Classic Slate</option>
+                        <option value="amber">Warm Amber</option>
+                        <option value="teal">Teal Glow</option>
+                        <option value="indigo">Deep Indigo</option>
+                        <option value="crimson">Crimson Red</option>
+                        <option value="gold">Golden Bronze</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeCardModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-white">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">Save Card</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: Add Transaction -->
-    <div id="transactionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs hidden p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-6 relative border border-slate-100">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-900 flex items-center">
-                    <i class="fa-solid fa-receipt text-emerald-600 mr-2"></i> Add Transaction
-                </h3>
-                <button onclick="closeModal('transactionModal')" class="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+    <!-- Modal: Log Expense -->
+    <div id="expenseModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg">Log New Expense</h3>
+                <button onclick="closeExpenseModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="transactionForm" onsubmit="handleTransactionSubmit(event)" class="space-y-4">
+            <form id="expenseForm" onsubmit="handleExpenseSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Merchant / Description</label>
-                    <input type="text" id="txMerchant" required placeholder="e.g. Whole Foods Market" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Select Card</label>
+                    <select id="expenseCardId" required class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <!-- Populated dynamically -->
+                    </select>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Amount ($)</label>
-                        <input type="number" id="txAmount" required min="0.01" step="any" placeholder="84.50" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Date</label>
-                        <input type="date" id="txDate" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Merchant / Description</label>
+                    <input type="text" id="expenseDescription" required placeholder="e.g. Amazon, Grocery, Fuel" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Select Credit Card</label>
-                        <select id="txCardId" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <!-- Populated dynamically -->
-                        </select>
+                        <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Amount (₹)</label>
+                        <input type="number" id="expenseAmount" required step="any" placeholder="1500" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Category</label>
-                        <select id="txCategory" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="Food & Dining">Food & Dining</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Bills & Utilities">Bills & Utilities</option>
-                            <option value="Travel">Travel</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Date</label>
+                        <input type="date" id="expenseDate" required class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('transactionModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition cursor-pointer">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition cursor-pointer">Add Expense</button>
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider mb-1 opacity-75">Category</label>
+                    <select id="expenseCategory" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="Shopping">Shopping</option>
+                        <option value="Groceries">Groceries</option>
+                        <option value="Dining">Dining & Food</option>
+                        <option value="Utilities">Bills & Utilities</option>
+                        <option value="Travel">Travel & Fuel</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeExpenseModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-white">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg">Add Expense</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Application Script Logic -->
+    <!-- Application Logic Script -->
     <script>
-        // Set current year in footer
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        // State Management
+        let appState = {
+            theme: localStorage.getItem('cc_tracker_theme') || 'slate',
+            cards: JSON.parse(localStorage.getItem('cc_tracker_cards')) || [
+                { id: '1', name: 'HDFC Regalia', last4: '4321', limit: 150000, statementDate: '15', dueDate: '5', color: 'indigo' },
+                { id: '2', name: 'SBI Cashback', last4: '8876', limit: 80000, statementDate: '20', dueDate: '10', color: 'emerald' }
+            ],
+            transactions: JSON.parse(localStorage.getItem('cc_tracker_transactions')) || [
+                { id: 't1', cardId: '1', description: 'Amazon Shopping', amount: 4500, date: '2026-10-20', category: 'Shopping' },
+                { id: 't2', cardId: '2', description: 'Groceries Supermart', amount: 2150, date: '2026-10-22', category: 'Groceries' }
+            ]
+        };
 
-        // Default initial data if localStorage is empty
-        const defaultCards = [
-            { id: 'card-1', name: 'Chase Freedom Flex', last4: '8842', limit: 8000, balance: 1420.50, color: 'from-blue-700 to-indigo-900' },
-            { id: 'card-2', name: 'Amex Gold Rewards', last4: '1004', limit: 15000, balance: 3250.00, color: 'from-slate-900 to-slate-800' },
-            { id: 'card-3', name: 'Capital One Quicksilver', last4: '5512', limit: 5000, balance: 610.25, color: 'from-emerald-700 to-teal-900' }
-        ];
+        let spendingChartInstance = null;
+        let categoryChartInstance = null;
 
-        const defaultTransactions = [
-            { id: 'tx-1', merchant: 'Whole Foods Market', amount: 124.50, cardId: 'card-1', category: 'Food & Dining', date: new Date().toISOString().split('T')[0] },
-            { id: 'tx-2', merchant: 'Delta Air Lines', amount: 340.00, cardId: 'card-2', category: 'Travel', date: new Date(Date.now() - 86400000).toISOString().split('T')[0] },
-            { id: 'tx-3', merchant: 'Electricity Utility Bill', amount: 96.25, cardId: 'card-3', category: 'Bills & Utilities', date: new Date(Date.now() - 172800000).toISOString().split('T')[0] },
-            { id: 'tx-4', merchant: 'Amazon Prime Order', amount: 45.99, cardId: 'card-1', category: 'Shopping', date: new Date(Date.now() - 259200000).toISOString().split('T')[0] }
-        ];
+        // Initialize App on Load
+        document.addEventListener('DOMContentLoaded', () => {
+            changeAppTheme(appState.theme, false);
+            document.getElementById('appThemeSelect').value = appState.theme;
+            document.getElementById('expenseDate').valueAsDate = new Date();
+            renderApp();
+        });
 
-        // State variables
-        let cards = JSON.parse(localStorage.getItem('cctracker_cards')) || defaultCards;
-        let transactions = JSON.parse(localStorage.getItem('cctracker_transactions')) || defaultTransactions;
-
-        // Save to localStorage
-        function saveData() {
-            localStorage.setItem('cctracker_cards', JSON.stringify(cards));
-            localStorage.setItem('cctracker_transactions', JSON.stringify(transactions));
-        }
-
-        // Toast Notification System
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-            const toastIcon = document.getElementById('toastIcon');
-
-            toastMessage.textContent = message;
-            if (isError) {
-                toastIcon.className = 'fa-solid fa-circle-exclamation text-red-400 text-base';
-            } else {
-                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-base';
-            }
-
-            toast.classList.remove('translate-x-full');
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-            }, 3500);
-        }
-
-        // Modal Helpers
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-            if (modalId === 'transactionModal') {
-                populateCardDropdowns();
-                // Set today as default date
-                document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
-            }
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-            if(modalId === 'cardModal') document.getElementById('cardForm').reset();
-            if(modalId === 'transactionModal') document.getElementById('transactionForm').reset();
-        }
-
-        // Populate Card Select Dropdowns
-        function populateCardDropdowns() {
-            const txCardSelect = document.getElementById('txCardId');
-            const cardFilter = document.getElementById('cardFilter');
-
-            txCardSelect.innerHTML = '';
+        // Theme Switcher
+        function changeAppTheme(themeName, save = true) {
+            appState.theme = themeName;
+            if(save) localStorage.setItem('cc_tracker_theme', themeName);
             
-            // Keep "All Cards" option for filter
-            const filterCurrentVal = cardFilter.value;
-            cardFilter.innerHTML = '<option value="">All Cards</option>';
-
-            if (cards.length === 0) {
-                txCardSelect.innerHTML = '<option value="">No cards available (Add card first)</option>';
-                return;
+            const body = document.body;
+            body.className = `theme-${themeName} min-h-screen font-sans antialiased transition-colors duration-300`;
+            if (themeName === 'light') {
+                body.classList.add('light');
+            } else {
+                body.classList.remove('light');
             }
+        }
 
-            cards.forEach(card => {
-                // For Transaction Modal
-                const opt1 = document.createElement('option');
-                opt1.value = card.id;
-                opt1.textContent = `${card.name} (...${card.last4})`;
-                txCardSelect.appendChild(opt1);
+        // Save to LocalStorage
+        function saveState() {
+            localStorage.setItem('cc_tracker_cards', JSON.stringify(appState.cards));
+            localStorage.setItem('cc_tracker_transactions', JSON.stringify(appState.transactions));
+            renderApp();
+        }
 
-                // For Filter Dropdown
-                const opt2 = document.createElement('option');
-                opt2.value = card.id;
-                opt2.textContent = `${card.name} (...${card.last4})`;
-                cardFilter.appendChild(opt2);
+        // Currency Formatter
+        function formatINR(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Render Dashboard & UI
+        function renderApp() {
+            renderCards();
+            renderDropdowns();
+            renderTransactions();
+            calculateSummary();
+            renderCharts();
+        }
+
+        // Calculate Totals & Summaries
+        function calculateSummary() {
+            let totalLimit = 0;
+            let totalSpent = 0;
+
+            appState.cards.forEach(card => {
+                totalLimit += Number(card.limit);
+                const spent = appState.transactions
+                    .filter(t => t.cardId === card.id)
+                    .reduce((sum, t) => sum + Number(t.amount), 0);
+                totalSpent += spent;
             });
 
-            cardFilter.value = filterCurrentVal;
+            const totalAvailable = totalLimit - totalSpent;
+            const overallUtilization = totalLimit > 0 ? ((totalSpent / totalLimit) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalLimit').innerText = formatINR(totalLimit);
+            document.getElementById('totalSpent').innerText = formatINR(totalSpent);
+            document.getElementById('totalAvailable').innerText = formatINR(totalAvailable);
+            document.getElementById('activeCardsCount').innerText = appState.cards.length;
+            document.getElementById('utilizationBadge').innerText = `${overallUtilization}% Overall Utilization`;
         }
 
-        // Format Currency
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-        }
-
-        // Render Dashboard Metrics
-        function updateDashboardMetrics() {
-            const totalBalance = cards.reduce((acc, card) => acc + Number(card.balance), 0);
-            const totalLimit = cards.reduce((acc, card) => acc + Number(card.limit), 0);
-            
-            // Monthly spend calculation (current month & year)
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-
-            const monthlySpend = transactions.reduce((acc, tx) => {
-                const txDate = new Date(tx.date);
-                if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-                    return acc + Number(tx.amount);
-                }
-                return acc;
-            }, 0);
-
-            const overallUtilization = totalLimit > 0 ? (totalBalance / totalLimit) * 100 : 0;
-
-            document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
-            document.getElementById('monthlySpend').textContent = formatCurrency(monthlySpend);
-            document.getElementById('totalLimit').textContent = formatCurrency(totalLimit);
-            document.getElementById('overallUtilization').textContent = overallUtilization.toFixed(1) + '%';
-            
-            const utilBar = document.getElementById('overallUtilizationBar');
-            utilBar.style.width = Math.min(overallUtilization, 100) + '%';
-            
-            if (overallUtilization > 75) {
-                utilBar.className = 'bg-red-500 h-2 rounded-full transition-all duration-500';
-            } else if (overallUtilization > 40) {
-                utilBar.className = 'bg-amber-500 h-2 rounded-full transition-all duration-500';
-            } else {
-                utilBar.className = 'bg-emerald-500 h-2 rounded-full transition-all duration-500';
-            }
-        }
-
-        // Render Cards List
+        // Render Credit Cards Grid
         function renderCards() {
-            const container = document.getElementById('cardsList');
-            container.innerHTML = '';
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
 
-            if (cards.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 text-center">
-                        <p class="text-slate-500 text-sm">No credit cards added yet.</p>
-                        <button onclick="openModal('cardModal')" class="mt-3 text-xs font-semibold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl transition cursor-pointer">Add Your First Card</button>
-                    </div>
-                `;
+            if (appState.cards.length === 0) {
+                grid.innerHTML = `<div class="glass-card p-6 rounded-2xl col-span-full text-center opacity-70">No credit cards added yet. Click "Add Card" to start.</div>`;
                 return;
             }
 
-            cards.forEach(card => {
-                const util = card.limit > 0 ? (card.balance / card.limit) * 100 : 0;
-                let barColor = 'bg-emerald-500';
-                if (util > 75) barColor = 'bg-red-500';
-                else if (util > 40) barColor = 'bg-amber-500';
+            appState.cards.forEach(card => {
+                const spent = appState.transactions
+                    .filter(t => t.cardId === card.id)
+                    .reduce((sum, t) => sum + Number(t.amount), 0);
+                const available = Number(card.limit) - spent;
+                const util = Number(card.limit) > 0 ? ((spent / card.limit) * 100).toFixed(1) : 0;
+                
+                const cardThemeClass = `card-theme-${card.color || 'default'}`;
 
                 const cardEl = document.createElement('div');
-                cardEl.className = `bg-gradient-to-br ${card.color} text-white p-5 rounded-2xl shadow-md relative overflow-hidden flex flex-col justify-between space-y-4`;
+                cardEl.className = `${cardThemeClass} p-5 rounded-2xl shadow-xl relative flex flex-col justify-between transition transform hover:-translate-y-1`;
                 cardEl.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs uppercase tracking-widest text-white/70 font-semibold">Credit Card</p>
-                            <h3 class="font-bold text-base mt-0.5">${card.name}</h3>
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg tracking-wide">${card.name}</h3>
+                                <p class="text-xs opacity-80 tracking-widest mt-0.5">•••• •••• •••• ${card.last4 || '----'}</p>
+                            </div>
+                            <div class="flex gap-1.5">
+                                <button onclick="editCard('${card.id}')" class="w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-xs transition" title="Edit Card"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteCard('${card.id}')" class="w-8 h-8 rounded-full bg-rose-500/30 hover:bg-rose-500/60 flex items-center justify-center text-xs transition text-rose-200" title="Delete Card"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg font-mono">•••• ${card.last4}</span>
-                            <button onclick="deleteCard('${card.id}')" title="Delete Card" class="h-7 w-7 rounded-lg bg-white/10 hover:bg-red-500/80 text-white flex items-center justify-center transition cursor-pointer">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
+
+                        <div class="mt-6 space-y-2">
+                            <div class="flex justify-between text-xs opacity-90">
+                                <span>Spent: <strong class="text-white">${formatINR(spent)}</strong></span>
+                                <span>Limit: <strong class="text-white">${formatINR(card.limit)}</strong></span>
+                            </div>
+                            <div class="w-full bg-black/30 rounded-full h-2 overflow-hidden">
+                                <div class="bg-white h-full rounded-full transition-all duration-500" style="width: ${Math.min(util, 100)}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] opacity-75 pt-1">
+                                <span>Available: ${formatINR(available)}</span>
+                                <span class="font-semibold">${util}% utilized</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex justify-between items-end pt-2">
-                        <div>
-                            <span class="text-xs text-white/70 block">Current Balance</span>
-                            <span class="text-xl font-bold">${formatCurrency(card.balance)}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-xs text-white/70 block">Limit</span>
-                            <span class="text-sm font-semibold">${formatCurrency(card.limit)}</span>
-                        </div>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-white/80">
-                            <span>Utilization</span>
-                            <span class="font-semibold">${util.toFixed(1)}%</span>
-                        </div>
-                        <div class="w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
-                            <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width: ${Math.min(util, 100)}%"></div>
-                        </div>
+
+                    <div class="mt-5 pt-3 border-t border-white/10 flex justify-between text-[11px] opacity-80">
+                        <span>Statement: Day ${card.statementDate || '-'}</span>
+                        <span>Due: Day ${card.dueDate || '-'}</span>
                     </div>
                 `;
-                container.appendChild(cardEl);
+                grid.appendChild(cardEl);
             });
         }
 
-        // Render Transactions Table with Filters
-        function renderTransactions() {
-            const tableBody = document.getElementById('transactionsTableBody');
-            const emptyState = document.getElementById('emptyTransactions');
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const cardFilter = document.getElementById('cardFilter').value;
+        // Render Select Dropdowns
+        function renderDropdowns() {
+            const expenseSelect = document.getElementById('expenseCardId');
+            const filterSelect = document.getElementById('filterCardSelect');
+            
+            const currentFilter = filterSelect.value;
 
-            tableBody.innerHTML = '';
+            expenseSelect.innerHTML = '';
+            filterSelect.innerHTML = '<option value="">All Cards</option>';
 
-            let filtered = transactions.filter(tx => {
-                const matchesSearch = tx.merchant.toLowerCase().includes(searchQuery);
-                const matchesCategory = categoryFilter === '' || tx.category === categoryFilter;
-                const matchesCard = cardFilter === '' || tx.cardId === cardFilter;
-                return matchesSearch && matchesCategory && matchesCard;
+            appState.cards.forEach(card => {
+                expenseSelect.innerHTML += `<option value="${card.id}">${card.name} (•••• ${card.last4})</option>`;
+                filterSelect.innerHTML += `<option value="${card.id}">${card.name}</option>`;
             });
+
+            filterSelect.value = currentFilter;
+        }
+
+        // Render Transactions Table
+        function renderTransactions() {
+            const tbody = document.getElementById('transactionsTableBody');
+            const filterCardId = document.getElementById('filterCardSelect').value;
+            tbody.innerHTML = '';
+
+            let filtered = appState.transactions;
+            if (filterCardId) {
+                filtered = filtered.filter(t => t.cardId === filterCardId);
+            }
 
             // Sort by date descending
             filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center opacity-70">No transactions recorded.</td></tr>`;
                 return;
-            } else {
-                emptyState.classList.add('hidden');
             }
 
-            filtered.forEach(tx => {
-                const card = cards.find(c => c.id === tx.cardId);
-                const cardNameFormatted = card ? `${card.name} (...${card.last4})` : 'Unknown Card';
-
-                // Category badge colors
-                let badgeClass = 'bg-slate-100 text-slate-700';
-                if(tx.category === 'Food & Dining') badgeClass = 'bg-orange-50 text-orange-700';
-                else if(tx.category === 'Shopping') badgeClass = 'bg-blue-50 text-blue-700';
-                else if(tx.category === 'Bills & Utilities') badgeClass = 'bg-purple-50 text-purple-700';
-                else if(tx.category === 'Travel') badgeClass = 'bg-emerald-50 text-emerald-700';
-                else if(tx.category === 'Entertainment') badgeClass = 'bg-pink-50 text-pink-700';
+            filtered.forEach(t => {
+                const card = appState.cards.find(c => c.id === t.cardId);
+                const cardName = card ? `${card.name} (•••• ${card.last4})` : 'Unknown Card';
 
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50/80 transition';
+                row.className = 'border-b border-slate-700/40 hover:bg-slate-800/20 transition';
                 row.innerHTML = `
-                    <td class="py-3.5 px-4 font-medium text-slate-900">
-                        <div class="flex items-center space-x-2">
-                            <div class="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
-                                <i class="fa-solid fa-cart-shopping"></i>
-                            </div>
-                            <span>${tx.merchant}</span>
-                        </div>
-                    </td>
-                    <td class="py-3.5 px-4 text-slate-600 text-xs">${cardNameFormatted}</td>
-                    <td class="py-3.5 px-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">
-                            ${tx.category}
-                        </span>
-                    </td>
-                    <td class="py-3.5 px-4 text-slate-500 text-xs">${tx.date}</td>
-                    <td class="py-3.5 px-4 text-right font-semibold text-slate-900">${formatCurrency(tx.amount)}</td>
-                    <td class="py-3.5 px-4 text-center">
-                        <button onclick="deleteTransaction('${tx.id}')" title="Delete Transaction" class="h-7 w-7 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition inline-flex items-center justify-center cursor-pointer">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
+                    <td class="p-4 text-xs opacity-80">${t.date}</td>
+                    <td class="p-4 font-medium text-xs">${cardName}</td>
+                    <td class="p-4 font-semibold">${t.description}</td>
+                    <td class="p-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${t.category}</span></td>
+                    <td class="p-4 text-right font-bold text-rose-400">-${formatINR(t.amount)}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteTransaction('${t.id}')" class="text-rose-400 hover:text-rose-300 transition text-xs p-1.5 rounded-lg bg-rose-950/30 hover:bg-rose-900/50"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
-                tableBody.appendChild(row);
+                tbody.appendChild(row);
             });
         }
 
-        // Handle Card Form Submission
-        function handleCardSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('cardName').value.trim();
-            const last4 = document.getElementById('cardLast4').value.trim();
-            const limit = parseFloat(document.getElementById('cardLimit').value);
-            const balance = parseFloat(document.getElementById('cardBalance').value);
-            const color = document.getElementById('cardColor').value;
-
-            const newCard = {
-                id: 'card-' + Date.now(),
-                name,
-                last4,
-                limit,
-                balance,
-                color
-            };
-
-            cards.push(newCard);
-            saveData();
-            refreshUI();
-            closeModal('cardModal');
-            showToast('Credit card added successfully!');
-        }
-
-        // Handle Transaction Form Submission
-        function handleTransactionSubmit(e) {
-            e.preventDefault();
-            const merchant = document.getElementById('txMerchant').value.trim();
-            const amount = parseFloat(document.getElementById('txAmount').value);
-            const cardId = document.getElementById('txCardId').value;
-            const category = document.getElementById('txCategory').value;
-            const date = document.getElementById('txDate').value;
-
-            const card = cards.find(c => c.id === cardId);
-            if (!card) {
-                showToast('Please select a valid credit card.', true);
-                return;
-            }
-
-            // Update card balance
-            card.balance += amount;
-
-            const newTx = {
-                id: 'tx-' + Date.now(),
-                merchant,
-                amount,
-                cardId,
-                category,
-                date
-            };
-
-            transactions.unshift(newTx);
-            saveData();
-            refreshUI();
-            closeModal('transactionModal');
-            showToast('Transaction added & balance updated!');
-        }
-
-        // Delete Card
-        function deleteCard(cardId) {
-            if (confirm('Are you sure you want to delete this card? Associated transactions will remain.')) {
-                cards = cards.filter(c => c.id !== cardId);
-                saveData();
-                refreshUI();
-                showToast('Credit card deleted.');
-            }
-        }
-
-        // Delete Transaction
-        function deleteTransaction(txId) {
-            const tx = transactions.find(t => t.id === txId);
-            if (tx) {
-                // Revert card balance deduction
-                const card = cards.find(c => c.id === tx.cardId);
-                if (card) {
-                    card.balance = Math.max(0, card.balance - tx.amount);
-                }
-                transactions = transactions.filter(t => t.id !== txId);
-                saveData();
-                refreshUI();
-                showToast('Transaction removed.');
-            }
-        }
-
-        // Master UI Refresh
-        function refreshUI() {
-            updateDashboardMetrics();
-            renderCards();
-            populateCardDropdowns();
+        function filterTransactions() {
             renderTransactions();
         }
 
-        // Initial Load
-        window.onload = function() {
-            refreshUI();
-        };
-    </script>
-</body>
-</html>
+        // Render Charts using Chart.js
+        function renderCharts() {
+            // 1. Spending per Card Bar Chart
+            const cardLabels = appState.cards.map(c => c.name);
+            const cardSpendData = appState.cards.map(c => {
+                return appState.transactions
+                    .filter(t => t.cardId === c.id)
+                    .reduce((sum, t) => sum + Number(t.amount), 0);
+            });
+
+            const ctxSpending = document.getElementById('spendingChart').getContext('2d');
+            if (spendingChartInstance) spendingChartInstance.destroy();
+
+            spendingChartInstance = new Chart(ctxSpending, {
+                type: 'bar',
+                data: {
+                    labels: cardLabels,
+                    datasets: [{
+                        label: 'Spent (₹)',
+                        data: cardSpendData,
+                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 1,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // 2. Category Breakdown Doughnut Chart
+            const categories = {};
+            appState.transactions.forEach(t => {
+                categories[t.category] = (categories[t.category] || 0) + Number(t.amount);
+            });
+
+            const catLabels = Object.keys(categories);
+            const catData = Object.values(categories);
+
+            const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            categoryChartInstance = new Chart(ctxCategory, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels.length > 0 ? catLabels : ['No Data'],
+                    datasets: [{
+                        data: catData.length > 0 ? catData : [1],
+                        backgroundColor: [
+                            '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6', '#64748b'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, color: '#94a3b8', font: { size: 10 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Modal Controls: Card
+        function openCardModal(cardId = null) {
+            document.getElementById('cardModal').classList.remove('hidden');
+            if (cardId) {
+                document.getElementById('cardModalTitle').innerText = 'Edit Credit Card';
+                const card = appState.cards.find(c => c.id === cardId);
+                document.getElementById('cardEditId').value = card.id;
+                document.getElementById('cardName').value = card.name;
+                document.getElementById('cardLast4').value = card.last4;
+                document.getElementById('cardLimit').value = card.limit;
+                document.getElementById('cardStatementDate').value = card.statementDate;
+                document.getElementById('cardDueDate').value = card.dueDate;
+                document.getElementById('cardColorTheme').value = card.color || 'default';
+            } else {
+                document.getElementById('cardModalTitle').innerText = 'Add New Credit Card';
+                document.getElementById('cardForm').reset();
+                document.getElementById('cardEditId').value = '';
+            }
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').classList.add('hidden');
+        }
+
+        function handleCardSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('cardEditId').value;
+            const name = document.getElementById('cardName').value;
+            const last4 = document.getElementById('cardLast4').value;
+            const limit = document.getElementById('cardLimit').value;
+            const statementDate = document.getElementById('cardStatementDate').value;
+            const dueDate = document.getElementById('cardDueDate').value;
+            const color = document.getElementById('cardColorTheme').value;
+
+            if (id) {
+                const card = appState.cards.find(c => c.id === id);
+                card.name = name;
+                card.last4 = last4;
+                card.limit = limit;
+                card.statementDate = statementDate;
+                card.dueDate = dueDate;
+                card.color = color;
+            } else {
+                const newCard = {
+                    id: 'card_' + Date.now(),
+                    name, last4, limit, statementDate, dueDate, color
+                };
+                appState.cards.push(newCard);
+            }
+
+            closeCardModal();
+            saveState();
+        }
+
+        function editCard(id) {
+            openCardModal(id);
+        }
+
+        function deleteCard(id) {
+            if (confirm('Are you sure you want to delete this card? Associated transactions will also be removed.')) {
+                appState.cards = appState.cards.filter(c => c.id !== id);
+                appState.transactions = appState.transactions.filter(t => t.cardId !== id);
+                saveState();
+            }
+        }
